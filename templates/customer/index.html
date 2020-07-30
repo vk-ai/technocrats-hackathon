@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Index</title>
+</head>
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+<body>
+    <div class="container">
+        <div class="row">
+            <h1>Video Live Stream</h1>
+        </div>
+        <div class="row">
+        <label for="stores">Choose Store:</label>
+          <select name="stores" id="stores">
+            <option value="Alaska">Alaska</option>
+            <option value="Maryland">Maryland</option>
+            <option value="Florida">Florida</option>
+            <option value="North Carolina">North Carolina</option>
+          </select>
+        </div>
+        <div class="row">
+            <img src="{% url 'video_feed' %}">
+        </div>
+        </div>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa" crossorigin="anonymous"></script>
+</body>
+</html>
