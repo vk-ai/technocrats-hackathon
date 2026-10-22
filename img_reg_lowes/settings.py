@@ -111,9 +111,11 @@ TIME_ZONE = 'UTC'
 
 USE_I18N = True
 
-USE_L10N = True
 
 USE_TZ = True
+
+# Keep 32-bit AutoField so the existing migrations stay valid on Django 3.2+.
+DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
 FCM_SERVER_KEY = 'AAAAAlEWysc:APA91bFIHgFHaupabR3DKqLxK8bzIIaEvAjS4Vn8RzdwudM9IqklCzgyUpsvQ4g0KNTGinDzYvs-bsS2nDgVM8xvTk3QAbTrwP5BSA8b_JegsMMJ_qPC-aQhb5CGSVhF_PnYZufCfJge'
 

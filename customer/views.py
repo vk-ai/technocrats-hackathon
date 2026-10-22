@@ -26,23 +26,27 @@ FONT_THICKNESS = 2
 know_encoding_list = []
 know_names_list = []
 know_ids_list = []
-get_all_customers = CustomerProfile.objects.all()
-for each_cust in get_all_customers:
-    img = each_cust.profile_image.path
-    curImg = cv2.imread(img)
-    # curImg = cv2.resize(curImg, (0, 0), None, 0.25, 0.25)
-    img = cv2.cvtColor(curImg, cv2.COLOR_BGR2RGB)
-    encode = face_recognition.face_encodings(img)[0]
-    know_encoding_list.append(encode)
-    know_names_list.append(each_cust.first_name +' '+ each_cust.last_name)
-    know_ids_list.append(each_cust.id)
 
-print('encoding',know_encoding_list)
-print('Names',know_names_list)
+
+def load_known_encodings():
+    """Load face encodings lazily (was at import time, which broke
+    `migrate`/`check` on a fresh database)."""
+    if know_encoding_list:
+        return
+    for each_cust in CustomerProfile.objects.all():
+        img = each_cust.profile_image.path
+        curImg = cv2.imread(img)
+        img = cv2.cvtColor(curImg, cv2.COLOR_BGR2RGB)
+        encode = face_recognition.face_encodings(img)[0]
+        know_encoding_list.append(encode)
+        know_names_list.append(each_cust.first_name + ' ' + each_cust.last_name)
+        know_ids_list.append(each_cust.id)
+
 
 # Methods
 class VideoCamera(object):
     def __init__(self):
+        load_known_encodings()
         self.video = cv2.VideoCapture(0 + cv2.CAP_DSHOW)
     def __del__(self):
         self.video.release()
