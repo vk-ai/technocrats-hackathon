@@ -11,6 +11,8 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework import exceptions
 from .serializers import CustomerProfileAndPurchaseHistorySerializer, OrderItemsDetails, SalesRepresentativesDetailsSerializer, OfferDetailsSerializer
+from rest_framework.permissions import AllowAny
+from .auth import issue_token
 from .core import format_response, success_message, is_authenticate_sales_rep, error_message, send_notification
 
 # Returns (R, G, B) from name
@@ -144,6 +146,8 @@ def index(request):
 
 
 class SalesRepresentativeRegister(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
 
     def post(self, request):
         email = request.data['email']
@@ -167,6 +171,9 @@ class SalesRepresentativeRegister(APIView):
 
 
 class SalesRepresentativeLogin(APIView):
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
     def post(self, request):
         device = request.data['device_token']
         device_type = request.data['device_type']
@@ -185,7 +192,8 @@ class SalesRepresentativeLogin(APIView):
                 FCMDevice.objects.create(user=user, registration_id=device,
                                          type=device_type)
             user_id = [{
-                "sales_rep_id": user.id
+                "sales_rep_id": user.id,
+                "token": issue_token(user),
             }]
             return Response(format_response(user_id))
         else:
@@ -224,26 +232,26 @@ class CustomerPurchaseHistoryAPI(APIView):
 
 class SalesRepresentativeDetailsAPI(APIView):
     def get(self, request, sales_id):
+        if request.user.id != sales_id:
+            return Response(format_response(error_message("Forbidden"), status.HTTP_403_FORBIDDEN),
+                            status=status.HTTP_403_FORBIDDEN)
         get_details = get_object_or_404(SalesRepresentative, id=sales_id)
         serializer = SalesRepresentativesDetailsSerializer(get_details)
         return Response(format_response(serializer.data))
 
 
 class SalesRepresentativeLogout(APIView):
+    """Logs out the authenticated rep (the token identifies who; a body id is ignored)."""
     def post(self, request):
-        get_id = request.data['sales_rep_id']
-        if get_id:
-            sales_rep = get_object_or_404(SalesRepresentative, id=get_id)
-            sales_rep.status = "not_available"
-            sales_rep.save()
-            user_device = FCMDevice.objects.get(user=sales_rep)
-            user_device.registration_id = ""
-            user_device.save()
-            return Response(format_response(success_message("Logout successful")))
+        sales_rep = request.user
+        sales_rep.status = "not_available"
+        sales_rep.save()
+        FCMDevice.objects.filter(user=sales_rep).update(registration_id="")
         return Response(format_response(success_message("Logout successful")))
 
 
 class ListOffersAPI(APIView):
+    permission_classes = [AllowAny]
     def post(self, request):
         get_category = request.data['category']
         offer_details = Offers.objects.filter(category=get_category)

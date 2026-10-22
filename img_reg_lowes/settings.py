@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/3.0/ref/settings/
 
 import os
 
+from django.core.exceptions import ImproperlyConfigured
+
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -20,12 +22,23 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # See https://docs.djangoproject.com/en/3.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'e_bv=lu4=ke#8jup99x(jqud(nd9-cf6y)qh#h-gp2oxh(ux3u'
+def _env_bool(name, default=False):
+    return os.environ.get(name, str(default)).strip().lower() in ("1", "true", "yes", "on")
 
-# SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
 
-ALLOWED_HOSTS = ["172.20.221.67", "*", "0.0.0.0"]
+# Debug is OFF unless DJANGO_DEBUG=true is set explicitly.
+DEBUG = _env_bool("DJANGO_DEBUG", False)
+
+# Secret key comes from the environment. A throwaway key is only allowed in DEBUG/dev.
+SECRET_KEY = os.environ.get("DJANGO_SECRET_KEY", "")
+if not SECRET_KEY:
+    if DEBUG:
+        SECRET_KEY = "dev-only-insecure-key-do-not-use-in-production"
+    else:
+        raise ImproperlyConfigured("DJANGO_SECRET_KEY must be set when DJANGO_DEBUG is not true (see .env.example).")
+
+
+ALLOWED_HOSTS = [h.strip() for h in os.environ.get("DJANGO_ALLOWED_HOSTS", "localhost,127.0.0.1").split(",") if h.strip()]
 
 
 # Application definition
@@ -117,7 +130,21 @@ USE_TZ = True
 # Keep 32-bit AutoField so the existing migrations stay valid on Django 3.2+.
 DEFAULT_AUTO_FIELD = 'django.db.models.AutoField'
 
-FCM_SERVER_KEY = 'AAAAAlEWysc:APA91bFIHgFHaupabR3DKqLxK8bzIIaEvAjS4Vn8RzdwudM9IqklCzgyUpsvQ4g0KNTGinDzYvs-bsS2nDgVM8xvTk3QAbTrwP5BSA8b_JegsMMJ_qPC-aQhb5CGSVhF_PnYZufCfJge'
+# Firebase Cloud Messaging server key (optional; push notifications are disabled when unset).
+FCM_SERVER_KEY = os.environ.get("FCM_SERVER_KEY", "")
+
+# Signed bearer tokens for the sales-rep API (see customer/auth.py).
+SALES_REP_TOKEN_MAX_AGE = int(os.environ.get("SALES_REP_TOKEN_MAX_AGE", str(7 * 24 * 3600)))
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": ["customer.auth.SalesRepTokenAuthentication"],
+    "DEFAULT_PERMISSION_CLASSES": ["customer.auth.IsSalesRep"],
+    "UNAUTHENTICATED_USER": None,
+}
+
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
+X_FRAME_OPTIONS = "DENY"
 
 
 # Static files (CSS, JavaScript, Images)
