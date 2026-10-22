@@ -100,3 +100,11 @@ class SecurityTests(TestCase):
         from django.conf import settings
         self.assertFalse(settings.DEBUG)
         self.assertNotIn("*", settings.ALLOWED_HOSTS)
+
+
+class OffersWithoutImageTests(TestCase):
+    def test_list_offers_without_image(self):
+        Offers.objects.create(category="tools", description="10% off")
+        r = APIClient().post("/api/list-offers", {"category": "tools"}, format="json")
+        self.assertEqual(r.status_code, 200)
+        self.assertIn("10% off", r.content.decode())
