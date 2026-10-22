@@ -1,5 +1,6 @@
 from .models import SalesRepresentative, FCMDevice
 from django.conf import settings
+from django.core.exceptions import ObjectDoesNotExist
 from pyfcm import FCMNotification
 
 def format_response(data, status=200):
@@ -57,6 +58,9 @@ def send_notification(user_id, **kwargs):
         return True
     data_message = kwargs.get('data_message', {})
     api_key = getattr(settings, 'FCM_SERVER_KEY', '')
+    if not api_key:
+        # FCM_SERVER_KEY not configured: push notifications disabled.
+        return None
     push_service = FCMNotification(api_key=api_key, proxy_dict=proxy_dict)
     if user_device.type == 'ios':
         result = push_service.notify_single_device(registration_id=user_device.registration_id,
