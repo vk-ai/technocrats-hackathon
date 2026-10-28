@@ -1,6 +1,6 @@
 # Offline smoke-test deps (no dlib/face_recognition/OpenCV build; see img_reg_lowes/settings_ci.py)
 Django==5.2.17
-djangorestframework==3.16.1
+djangorestframework==3.18.2
 asgiref==3.9.1
 sqlparse==0.5.3
 requests==2.32.5
